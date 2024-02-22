@@ -27,19 +27,47 @@ def gen_theta():
 
 # energy modulation
 amplitude = 1.0
-E = amplitude*(s**2+0.01)*exp(-(s/0.7)**2)
+beta = 4.0
+delta = 0.0025
+def chi(r):
+    return minimum(r, (r+0.5)**-beta)
+
+E = amplitude*chi(abs(omega)*delta)
 
 def conv_theta(a, theta):
     af = fft.fft(a)
     thetaf = fft.fft(theta)
     conv = real(fft.ifft(af*thetaf*E))
+    conv += average(a) - average(conv)
     return conv
     
-import matplotlib.pyplot as pp
-for i in range(10):
-    theta = gen_theta()
-    a = gen_theta()
-    conv = conv_theta(a, theta)
-    #pp.plot(a)
-    pp.plot(conv)
-    pp.show()
+# forming the least squares system
+# A, B are data arrays with each column an input output pair
+
+# generate the thetas
+thetas = []
+for i in modes:
+    thetas.append(gen_theta())
+
+lambda = 1.0
+nmodes = 10
+A = zeros((nmodes, nmodes))
+b = zeros(ndata)
+
+# set up the least squares
+for n in ndata:
+    phi = zeros((nmodes, ng))
+    for l in range(nmodes):
+        phi[l, :] = sigma(conv(a, thetas[l]))
+    for l in range(nmodes):
+        b[l] += dot(y[n, :], phi[l, :])*L/ng
+        for i in range(nmodes):
+            phi_i = sigma(conv(a, thetas[i]))
+            A[l, i] += dot(phi[i, :], phi[l, :])*L/ng
+
+# solve the least squares problem
+
+B = vstack((A, lambda**0.5*eye(nmodes)))
+bp = concatenate((b, zeros(nmodes)))
+
+x = linalg.lstsq(B, bp)
