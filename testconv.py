@@ -1,7 +1,7 @@
 from numpy import *
 from scipy import fft
 
-data = np.load("bdata.npy")
+data = load("bdata.npy")
 # data shape ng x nsamples x 2
 ng = data.shape[0]
 nsamples = data.shape[1]
@@ -13,7 +13,7 @@ omega = fft.fftfreq(ng)*ng*2*pi/L
 def gen_theta():
 
     # spatial white noise
-    theta = random.randn(128)/ds**0.5
+    theta = random.randn(ng)/ds**0.5
     
     # ifft
     thetab = fft.fft(theta)
@@ -49,31 +49,34 @@ def conv_theta(a, theta):
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
+nmodes = 10
 thetas = []
-for i in modes:
+for i in range(nmodes):
     thetas.append(gen_theta())
 
-lambda = 1.0e-6
-nmodes = 10
+llambda = 1.0e-6
 A = zeros((nmodes, nmodes))
-b = zeros(ndata)
+b = zeros(nsamples)
+
+def sigma(x):
+    return where(x>0, x, exp(x) - 1)
 
 # set up the least squares
-for n in nsamples:
+for n in range(nsamples):
     a = data[:, n, 0]
     y = data[:, n, 1]
     phi = zeros((nmodes, ng))
     for l in range(nmodes):
-        phi[l, :] = sigma(conv(a, thetas[l]))
+        phi[l, :] = sigma(conv_theta(a, thetas[l]))
     for l in range(nmodes):
         b[l] += dot(y[n, :], phi[l, :])*L/ng
         for i in range(nmodes):
-            phi_i = sigma(conv(a, thetas[i]))
+            phi_i = sigma(conv_theta(a, thetas[i]))
             A[l, i] += dot(phi[i, :], phi[l, :])*L/ng
 
 # solve the least squares problem
 
-B = vstack((A, lambda**0.5*eye(nmodes)))
+B = vstack((A, llambda**0.5*eye(nmodes)))
 bp = concatenate((b, zeros(nmodes)))
 
 x = linalg.lstsq(B, bp)
