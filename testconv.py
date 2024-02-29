@@ -56,7 +56,7 @@ for i in range(nmodes):
 
 llambda = 1.0e-6
 A = zeros((nmodes, nmodes))
-b = zeros(nsamples)
+b = zeros(nmodes)
 
 def sigma(x):
     return where(x>0, x, exp(x) - 1)
@@ -69,7 +69,7 @@ for n in range(nsamples):
     for l in range(nmodes):
         phi[l, :] = sigma(conv_theta(a, thetas[l]))
     for l in range(nmodes):
-        b[l] += dot(y[n, :], phi[l, :])*L/ng
+        b[l] += dot(y, phi[l, :])*L/ng
         for i in range(nmodes):
             phi_i = sigma(conv_theta(a, thetas[i]))
             A[l, i] += dot(phi[i, :], phi[l, :])*L/ng
@@ -79,4 +79,4 @@ for n in range(nsamples):
 B = vstack((A, llambda**0.5*eye(nmodes)))
 bp = concatenate((b, zeros(nmodes)))
 
-x = linalg.lstsq(B, bp)
+x = linalg.lstsq(B, bp, rcond=None)
