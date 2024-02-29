@@ -1,7 +1,10 @@
 from numpy import *
 from scipy import fft
 
-ng = 128
+data = np.load("bdata.npy")
+# data shape ng x nsamples x 2
+ng = data.shape[0]
+nsamples = data.shape[1]
 L = 1.
 s = arange(0.,ng)/ng
 ds = L/ng
@@ -23,6 +26,7 @@ def gen_theta():
     thetab *= C
 
     theta = real(fft.ifft(thetab))
+    theta -= average(theta)
     return theta
 
 # energy modulation
@@ -49,13 +53,15 @@ thetas = []
 for i in modes:
     thetas.append(gen_theta())
 
-lambda = 1.0
+lambda = 1.0e-6
 nmodes = 10
 A = zeros((nmodes, nmodes))
 b = zeros(ndata)
 
 # set up the least squares
-for n in ndata:
+for n in nsamples:
+    a = data[:, n, 0]
+    y = data[:, n, 1]
     phi = zeros((nmodes, ng))
     for l in range(nmodes):
         phi[l, :] = sigma(conv(a, thetas[l]))
