@@ -38,10 +38,6 @@ llambda = 1.0e-6
 A, b = rf.build_A(llambda, data)
 
 # solve the least squares problem
+x = rf.solve_A(A, b)
 
-B = vstack((A, llambda**0.5*eye(nmodes)))
-bp = concatenate((b, zeros(nmodes)))
-
-x = linalg.lstsq(B, bp, rcond=None)
-
-save("coeffs.npy", x[0])
+save("coeffs.npy", x)

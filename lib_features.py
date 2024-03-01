@@ -69,3 +69,9 @@ class random_f(object):
                 for i in range(self.nmodes):
                     A[l, i] += dot(phi[i, :], phi[l, :])*self.L/self.ng
         return A, b
+
+    def solve_A(self, A, b):
+        B = vstack((A, self.llambda**0.5*eye(self.nmodes)))
+        bp = concatenate((b, zeros(self.nmodes)))
+        x = linalg.lstsq(B, bp, rcond=None)
+        return x[0]
