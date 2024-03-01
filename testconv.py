@@ -50,7 +50,7 @@ def conv_theta(a, theta):
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
-nmodes = 500
+nmodes = 1000
 thetas = []
 print(ng)
 for i in ProgressBar("theta").iter(range(nmodes)):
@@ -88,4 +88,4 @@ bp = concatenate((b, zeros(nmodes)))
 
 x = linalg.lstsq(B, bp, rcond=None)
 
-np.save("coeffs.npy", x)
+save("coeffs.npy", x[0])
