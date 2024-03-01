@@ -50,7 +50,7 @@ def conv_theta(a, theta):
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
-nmodes = 1000
+nmodes = 500
 thetas = []
 print(ng)
 for i in ProgressBar("theta").iter(range(nmodes)):
@@ -74,11 +74,11 @@ for n in ProgressBar("sample").iter(range(nsamples)):
     y = data[:, n, 1]
     phi = zeros((nmodes, ng))
     for l in range(nmodes):
-        phi[l, :] = sigma(conv_theta(a, thetas[l]))
+        phi[l, :] = conv_theta(a, thetas[l]) # sigma(conv_theta(a, thetas[l]))
+    phi = sigma(phi)
     for l in range(nmodes):
         b[l] += dot(y, phi[l, :])*L/ng
         for i in range(nmodes):
-            phi_i = sigma(conv_theta(a, thetas[i]))
             A[l, i] += dot(phi[i, :], phi[l, :])*L/ng
 
 # solve the least squares problem
@@ -87,3 +87,5 @@ B = vstack((A, llambda**0.5*eye(nmodes)))
 bp = concatenate((b, zeros(nmodes)))
 
 x = linalg.lstsq(B, bp, rcond=None)
+
+np.save("coeffs.npy", x)
