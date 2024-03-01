@@ -1,6 +1,7 @@
 from numpy import *
 from scipy import fft
 from firedrake import ProgressBar
+from lib_features import random_f
 
 data = load("bdata.npy")
 # data shape ng x nsamples x 2
@@ -10,76 +11,31 @@ L = 1.
 s = arange(0.,ng)/ng
 ds = L/ng
 omega = fft.fftfreq(ng)*ng*2*pi/L
-
-def gen_theta():
-
-    # spatial white noise
-    theta = random.randn(ng)/ds**0.5
-    
-    # ifft
-    thetab = fft.fft(theta)
-
-    tau = 7.0
-    alpha = 1
-    
-    C = tau**(2*alpha-1)*(omega**2 + tau)**(-alpha)
-    
-    thetab *= C
-
-    theta = real(fft.ifft(thetab))
-    theta -= average(theta)
-    return theta
-
-# energy modulation
+tau = 7.0
+alpha = 1
 amplitude = 1.0
 beta = 4.0
 delta = 0.0025
-def chi(r):
-    return minimum(r, (r+0.5)**-beta)
 
-E = amplitude*chi(abs(omega)*delta)
+rf = random_f(ng=ng, nsamples=nsamples, L=L,
+              tau=tau, alpha=alpha,
+                 amplitude=amplitude, beta=beta, delta=delta)
 
-def conv_theta(a, theta):
-    af = fft.fft(a)
-    thetaf = fft.fft(theta)
-    conv = real(fft.ifft(af*thetaf*E))
-    conv += average(a) - average(conv)
-    return conv
-    
 # forming the least squares system
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
 nmodes = 1000
-thetas = []
-print(ng)
-for i in ProgressBar("theta").iter(range(nmodes)):
-    thetas.append(gen_theta())
+rf.build_thetas(nmodes)
 
 llambda = 1.0e-6
-A = zeros((nmodes, nmodes))
-b = zeros(nmodes)
 
-def sigma(x):
-    return where(x>0, x, exp(x) - 1)
-
-# in the paper
+# In the paper
 # n' is testing pairs 4000
 # n is training pairs 512
 # m is the number of modes 4000
 
-# set up the least squares
-for n in ProgressBar("sample").iter(range(nsamples)):
-    a = data[:, n, 0]
-    y = data[:, n, 1]
-    phi = zeros((nmodes, ng))
-    for l in range(nmodes):
-        phi[l, :] = conv_theta(a, thetas[l]) # sigma(conv_theta(a, thetas[l]))
-    phi = sigma(phi)
-    for l in range(nmodes):
-        b[l] += dot(y, phi[l, :])*L/ng
-        for i in range(nmodes):
-            A[l, i] += dot(phi[i, :], phi[l, :])*L/ng
+A, b = rf.build_A(llambda, data)
 
 # solve the least squares problem
 
