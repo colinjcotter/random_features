@@ -5,7 +5,8 @@ ncells = 124
 mesh = PeriodicIntervalMesh(ncells, 1)
 V = FunctionSpace(mesh, "CG", 1)
 VDG = FunctionSpace(mesh, "DG", 0)
-pcg = PCG64(seed=538746341)
+#pcg = PCG64(seed=538746341) # training data
+pcg = PCG64(seed=965837234) # testing data
 rg = RandomGenerator(pcg)
 
 u = TrialFunction(V)
@@ -59,17 +60,17 @@ def forward(u_in, u_out):
 u_out = Function(V)
 
 nu = u_out.dat.data[:].size
-nsamples = 512
+nsamples = 2000
 import numpy as np
 data = np.zeros((nu, nsamples, 2))
 
-file0 = File("matern.pvd")
+#file0 = File("matern.pvd")
 for i in ProgressBar("sample").iter(range(nsamples)):
     matern()
     mfield -= assemble(mfield*dx)
     mfield *= c0
     forward(mfield, u_out)
-    file0.write(mfield, u_out)
+    #file0.write(mfield, u_out)
     data[:, i, 0] = mfield.dat.data[:]
     data[:, i, 1] = u_out.dat.data[:]
 
@@ -78,4 +79,4 @@ x, = SpatialCoordinate(mesh)
 X.interpolate(x)
 print(X.dat.data)
 
-np.save("xdat.npy", X.dat.data)
+np.save("xdat_test.npy", X.dat.data)

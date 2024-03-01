@@ -75,3 +75,7 @@ class random_f(object):
         bp = concatenate((b, zeros(self.nmodes)))
         x = linalg.lstsq(B, bp, rcond=None)
         return x[0]
+
+# TODO:
+# make sure that we save thetas as well as coefficients
+# make a "map" that takes input and applies the random feature mapping
