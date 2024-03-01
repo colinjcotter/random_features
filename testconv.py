@@ -1,6 +1,4 @@
 from numpy import *
-from scipy import fft
-from firedrake import ProgressBar
 from lib_features import random_f
 
 data = load("bdata.npy")
@@ -8,9 +6,6 @@ data = load("bdata.npy")
 ng = data.shape[0]
 nsamples = data.shape[1]
 L = 1.
-s = arange(0.,ng)/ng
-ds = L/ng
-omega = fft.fftfreq(ng)*ng*2*pi/L
 tau = 7.0
 alpha = 1
 amplitude = 1.0
