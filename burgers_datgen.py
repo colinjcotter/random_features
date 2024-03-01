@@ -1,7 +1,7 @@
 from firedrake import *
 import matplotlib.pyplot as pp
 
-ncells = 100
+ncells = 124
 mesh = PeriodicIntervalMesh(ncells, 1)
 V = FunctionSpace(mesh, "CG", 1)
 VDG = FunctionSpace(mesh, "DG", 0)
@@ -64,8 +64,7 @@ import numpy as np
 data = np.zeros((nu, nsamples, 2))
 
 file0 = File("matern.pvd")
-for i in range(nsamples):
-    print(f"Sample {i}")
+for i in ProgressBar("sample").iter(range(nsamples)):
     matern()
     mfield -= assemble(mfield*dx)
     mfield *= c0

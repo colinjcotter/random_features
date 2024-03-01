@@ -1,5 +1,6 @@
 from numpy import *
 from scipy import fft
+from firedrake import ProgressBar
 
 data = load("bdata.npy")
 # data shape ng x nsamples x 2
@@ -49,9 +50,10 @@ def conv_theta(a, theta):
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
-nmodes = 10
+nmodes = 1000
 thetas = []
-for i in range(nmodes):
+print(ng)
+for i in ProgressBar("theta").iter(range(nmodes)):
     thetas.append(gen_theta())
 
 llambda = 1.0e-6
@@ -61,8 +63,13 @@ b = zeros(nmodes)
 def sigma(x):
     return where(x>0, x, exp(x) - 1)
 
+# in the paper
+# n' is testing pairs 4000
+# n is training pairs 512
+# m is the number of modes 4000
+
 # set up the least squares
-for n in range(nsamples):
+for n in ProgressBar("sample").iter(range(nsamples)):
     a = data[:, n, 0]
     y = data[:, n, 1]
     phi = zeros((nmodes, ng))
