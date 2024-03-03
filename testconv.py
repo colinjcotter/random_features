@@ -23,7 +23,7 @@ rf = random_f(ng=ng, nsamples=nsamples, L=L,
 nmodes = 1000
 rf.build_thetas(nmodes)
 
-llambda = 1.0e-6
+llambda = 1.0e-9
 
 # In the paper
 # n' is testing pairs 4000

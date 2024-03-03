@@ -72,6 +72,7 @@ class random_f(object):
         return A, b
 
     def solve_A(self, A, b):
+        m, _ = A.shape
         B = vstack((A, self.llambda**0.5*eye(self.nmodes)))
         bp = concatenate((b, zeros(self.nmodes)))
         x = linalg.lstsq(B, bp, rcond=None)

@@ -39,11 +39,11 @@ def matern():
     m_solver2.solve()
 
 T = 1.0 #  simulation time
-nu = Constant(1.0e-2)
+viscosity = Constant(1.0e-2)
 dt = 1./ncells
 timestep = Constant(dt)
 F = (inner((u1 - u0)/timestep, v)
-     + inner(u1*u1.dx(0), v) + nu*inner(grad(u1), grad(v)))*dx
+     + inner(u1*u1.dx(0), v) + viscosity*inner(grad(u1), grad(v)))*dx
 b_prob = NonlinearVariationalProblem(F, u1)
 b_solver = NonlinearVariationalSolver(b_prob)
 
@@ -58,9 +58,8 @@ def forward(u_in, u_out):
     u_out.assign(u0)
 
 u_out = Function(V)
-
 nu = u_out.dat.data[:].size
-nsamples = 2000
+nsamples = 512
 import numpy as np
 data = np.zeros((nu, nsamples, 2))
 
@@ -74,9 +73,5 @@ for i in ProgressBar("sample").iter(range(nsamples)):
     data[:, i, 0] = mfield.dat.data[:]
     data[:, i, 1] = u_out.dat.data[:]
 
-X = Function(V)
-x, = SpatialCoordinate(mesh)
-X.interpolate(x)
-print(X.dat.data)
-
-np.save("xdat_test.npy", X.dat.data)
+print(data.shape)
+np.save("bdata.npy", data)
