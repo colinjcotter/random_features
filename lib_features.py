@@ -44,9 +44,10 @@ class random_f(object):
 
     def build_thetas(self, nmodes):
         self.nmodes = nmodes
-        self.thetas = []
+        thetas = []
         for i in ProgressBar("thetas").iter(range(nmodes)):
-            self.thetas.append(self.gen_theta())
+            thetas.append(self.gen_theta())
+        self.thetas = array(thetas)
 
     def sigma(self, x):
         return where(x>0, x, exp(x) - 1)
@@ -62,7 +63,7 @@ class random_f(object):
             y = data[:, n, 1]
             phi = zeros((self.nmodes, self.ng))
             for l in range(self.nmodes):
-                phi[l, :] = self.conv_theta(a, self.thetas[l])
+                phi[l, :] = self.conv_theta(a, self.thetas[l, :])
             phi = self.sigma(phi)
             for l in range(self.nmodes):
                 b[l] += dot(y, phi[l, :])*self.L/self.ng
@@ -74,8 +75,20 @@ class random_f(object):
         B = vstack((A, self.llambda**0.5*eye(self.nmodes)))
         bp = concatenate((b, zeros(self.nmodes)))
         x = linalg.lstsq(B, bp, rcond=None)
-        return x[0]
+        self.coeffs = x[0]
 
-# TODO:
-# make sure that we save thetas as well as coefficients
-# make a "map" that takes input and applies the random feature mapping
+    def save(self, fname="rnd"):
+        save(fname+"_thetas.npy", self.thetas)
+        save(fname+"_coeffs.npy", self.coeffs)
+
+    def load(self, fname=None):
+        self.thetas = load(fname+"_thetas.npy")
+        self.coeffs = load(fname+"_coeffs.npy")
+
+    def map(self, a):
+        assert(a.shape == (self.ng,))
+        a_out = a.copy()
+        for l in range(self.nmodes):
+            c = self.coeffs[l]
+            a_out += self.sigma(self.conv_theta(a, self.thetas[l, :]))
+        return a_out
