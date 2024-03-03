@@ -83,12 +83,15 @@ class random_f(object):
 
     def load(self, fname=None):
         self.thetas = load(fname+"_thetas.npy")
+        self.nmodes = self.thetas.shape[0]
         self.coeffs = load(fname+"_coeffs.npy")
 
     def map(self, a):
         assert(a.shape == (self.ng,))
-        a_out = a.copy()
+        a_out = 0.*a
         for l in range(self.nmodes):
             c = self.coeffs[l]
-            a_out += self.sigma(self.conv_theta(a, self.thetas[l, :]))
+            F = self.sigma(self.conv_theta(a, self.thetas[l, :]))
+            print(linalg.norm(a-a_out))
+            a_out += c*F
         return a_out
