@@ -20,7 +20,7 @@ rf = random_f(ng=ng, nsamples=nsamples, L=L,
 # A, B are data arrays with each column an input output pair
 
 # generate the thetas
-nmodes = 10
+nmodes = 1000
 rf.build_thetas(nmodes)
 
 llambda = 1.0e-6

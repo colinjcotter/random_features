@@ -26,5 +26,5 @@ for i in range(rf.nsamples):
     pp.plot(a, 'r-')
     pp.plot(a_T, 'k-.')
     pp.plot(a_out, 'b--')
-    #pp.legend(["in", "out", "out_rf"])
+    pp.legend(["in", "out", "out_rf"])
     pp.show()
