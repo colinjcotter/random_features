@@ -30,8 +30,8 @@ llambda = 1.0e-9
 # n is training pairs 512
 # m is the number of modes 4000
 
-A, b = rf.build_A(llambda, data)
+rf.build_A(llambda, data)
 
 # solve the least squares problem
-x = rf.solve_A(A, b)
+rf.solve_A()
 rf.save(fname="test")

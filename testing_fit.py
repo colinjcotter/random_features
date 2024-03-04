@@ -2,7 +2,7 @@ from numpy import *
 from lib_features import random_f
 import matplotlib.pyplot as pp
 
-data = load("bdata.npy")
+data = load("tdata.npy")
 # data shape ng x nsamples x 2
 ng = data.shape[0]
 nsamples = data.shape[1]
@@ -19,7 +19,7 @@ rf = random_f(ng=ng, nsamples=nsamples, L=L,
 
 rf.load(fname="test")
 
-for i in range(rf.nsamples):
+for i in range(20):
     a = data[:, i, 0]
     a_T = data[:, i, 1]
     a_out = rf.map(a)
@@ -27,4 +27,5 @@ for i in range(rf.nsamples):
     pp.plot(a_T, 'k-.')
     pp.plot(a_out, 'b--')
     pp.legend(["in", "out", "out_rf"])
-    pp.show()
+    pp.savefig("plots_"+str(i)+".png")
+    pp.close()

@@ -6,7 +6,7 @@ mesh = PeriodicIntervalMesh(ncells, 1)
 V = FunctionSpace(mesh, "CG", 1)
 VDG = FunctionSpace(mesh, "DG", 0)
 #pcg = PCG64(seed=538746341) # training data
-pcg = PCG64(seed=965837234) # testing data
+pcg = PCG64(seed=9658137234) # testing data
 rg = RandomGenerator(pcg)
 
 u = TrialFunction(V)
@@ -59,7 +59,7 @@ def forward(u_in, u_out):
 
 u_out = Function(V)
 nu = u_out.dat.data[:].size
-nsamples = 512
+nsamples = 2000
 import numpy as np
 data = np.zeros((nu, nsamples, 2))
 
@@ -74,4 +74,4 @@ for i in ProgressBar("sample").iter(range(nsamples)):
     data[:, i, 1] = u_out.dat.data[:]
 
 print(data.shape)
-np.save("bdata.npy", data)
+np.save("tdata.npy", data)
