@@ -131,7 +131,7 @@ class BurgersBE(object):
         return self.u
 
 
-class BurgersIMEX(object):
+class BurgersBE(object):
     """
     Solves Burgers equation using backwards Euler
     """
@@ -212,72 +212,6 @@ class RK4Lorenz63(object):
         return self.Xnp1
 
 
-def main_parareal():
-    n = 1000
-    mesh = PeriodicUnitIntervalMesh(n)
-
-    # We choose degree 2 continuous Lagrange polynomials. We also need a
-    # piecewise linear space for output purposes::
-
-    V = FunctionSpace(mesh, "CG", 2)
-
-    # We also need solution functions for the current and the next
-    # timestep. Note that, since this is a nonlinear problem, we don't
-    # define trial functions::
-
-    u0 = Function(V, name="Velocity")
-
-    # Initial condition
-    Vic = FunctionSpace(mesh, "DG", 0)
-    pcg = PCG64(seed=123456789)
-    rg = RandomGenerator(pcg)
-    ic = rg.normal(Vic)
-
-    du = TrialFunction(V)
-    v = TestFunction(V)
-    u0 = Function(V)
-    u = Function(V)
-    # lengthscale over which to smooth
-    alpha = Constant(0.05)
-    area = assemble(1*dx(domain=ic.ufl_domain()))
-    a = (alpha**2 * du.dx(0) * v.dx(0) + du * v) * dx
-    L = (ic / sqrt(area)) * v * dx
-    solve(a == L, u0,
-          solver_parameters={'ksp_type': 'preonly', 'pc_type': 'lu'})
-
-    a = 10
-    u0.interpolate(Constant(1/a)*ln(1 + exp(Constant(a)*u0)))
-
-    # viscosity
-    nu = 0.01
-
-    # end time
-    tmax = 1
-
-    # number of parareal iterations
-    K = 0
-    # number of coarse timesteps
-    nG = 10
-    # number of fine timesteps per coarse timestep
-    nF = 10
-
-    # coarse timestep
-    dT = tmax / nG
-    # fine timestep
-    dt = dT / nF
-
-    print("coarse timestep: ", dT)
-    print("fine timestep: ", dt)
-
-    #G = BurgersBE(V, nu, dT, 1)
-    #F = BurgersBE(V, nu, dt, nF)
-    G = BurgersIMEX(V, nu, dT, 1)
-    F = BurgersIMEX(V, nu, dt, nF)
-    solver = Parareal(G, F, V, u0, nG, K)
-    
-    solver.parareal()
-
-
 def gander_parareal():
     # settings to match Gander and Hairer paper
     n = 50
@@ -314,46 +248,9 @@ def gander_parareal():
 
     G = BurgersBE(V, nu, dT, 1)
     F = BurgersBE(V, nu, dt, nF)
-    solver = Parareal(G, F, V, u0, nG, K)
-    
+    solver = Parareal(G, F, V, u0, nG, K)    
     solver.parareal()
-
-
-def lorenz_parareal():
-
-    n = 1
-    mesh = UnitIntervalMesh(n)
-    V = VectorFunctionSpace(mesh, "DG", 0, dim=3)
-    X = Function(V)
-    x, y, z = X.sub(0), X.sub(1), X.sub(2)
-    x.assign(Constant(5))
-    y.assign(Constant(-5))
-    z.assign(Constant(20))
-
-    K = 20
-    nG = 180
-    nF = 80
-
-    tmax = 10
-
-    # coarse timestep
-    dT = tmax / nG
-    # fine timestep
-    dt = dT / nF
-
-    print("coarse dt: ", dT)
-    print("fine dt: ", dt)
-    G = RK4Lorenz63(V, dT, 1)
-    F = RK4Lorenz63(V, dt, nF)
-    
-    solver = Parareal(G, F, V, X, nG, K)
-    solver.parareal()
-
-
-
 
 if __name__ == "__main__":
-    #main_parareal()
-    #lorenz_parareal()
     #gander_parareal()
     get_burgers_data()
