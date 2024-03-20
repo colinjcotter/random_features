@@ -1,7 +1,7 @@
 from numpy import *
 from lib_features import random_f
 
-data = load("bdata.npy")
+data = load("tdata.npy")
 # data shape ng x nsamples x 2
 ng = data.shape[0]
 nsamples = data.shape[1]

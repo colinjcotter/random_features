@@ -96,40 +96,13 @@ class Parareal:
             for i in range(self.nG):
                 yG[i+1].assign(self.coarse_solver.apply(soln[i]))
                 soln[i+1].assign(yG[i+1] - yG_prev[i+1] + yF[i+1])
-                #print(errornorm(yG[i+1], yG_prev[i+1]))
+                print(errornorm(yG[i+1], yG_prev[i+1]))
                 #print(errornorm(yG_correct[i+1], yref[i+1]))
             for i in range(self.nG):
                 yG_prev[i+1].assign(yG[i+1])
                 self.yG_out.assign(soln[i+1])
                 self.yref_out.assign(yref[i+1])
                 outfile.write(self.yG_out, self.yref_out)
-
-
-class BurgersBE(object):
-    """
-    Solves Burgers equation using backwards Euler
-    """
-    def __init__(self, V, nu, dt, ndt):
-
-        v = TestFunction(V)
-        self.u = Function(V)
-        self.u_ = Function(V)
-
-        eqn = (self.u - self.u_) * v * dx + dt * (self.u * self.u.dx(0) *  v * dx + nu * self.u.dx(0) * v.dx(0) * dx)
-
-        prob = NonlinearVariationalProblem(eqn, self.u)
-        self.solver = NonlinearVariationalSolver(prob)
-
-        self.ndt = ndt
-
-    def apply(self, u):
-
-        for n in range(self.ndt):
-            self.u_.assign(u)
-            self.solver.solve()
-
-        return self.u
-
 
 class BurgersBE(object):
     """
@@ -159,66 +132,49 @@ class BurgersBE(object):
 
         return self.unp1
 
+class Burgers_rf(object):
+    """
+    Predicts a time T flow map for Burgers fitted from data
+    """
+    def __init__(self):
+        from lib_features import random_f
+        
+        data = np.load("tdata.npy")
+        # data shape ng x nsamples x 2
+        ng = data.shape[0]
+        nsamples = data.shape[1]
+        L = 1.
+        tau = 7.0
+        alpha = 1
+        amplitude = 1.0
+        beta = 4.0
+        delta = 0.0025
+        
+        rf = random_f(ng=ng, nsamples=nsamples, L=L,
+                      tau=tau, alpha=alpha,
+                      amplitude=amplitude, beta=beta, delta=delta)
 
-class RK4Lorenz63(object):
-
-    def __init__(self, V, dt, ndt, sigma=10, beta=8/3, rho=28):
-
-        v1, v2, v3 = TestFunctions(V)
-        x_, y_, z_ = TrialFunctions(V)
-        self.X = Function(V)
-        x, y, z = self.X.sub(0), self.X.sub(1), self.X.sub(2)
-        a = v1 * x_ * dx + v2 * y_ * dx + v3 * z_ * dx
-        L = (v1 * sigma * (y - x) * dx + v2 * (x * (rho - z) - y) * dx +
-             v3 * (x * y - beta * z) * dx)
-
-        self.k = Function(V)
-        prob = LinearVariationalProblem(a, L, self.k)
-        self.solver = LinearVariationalSolver(prob)
-
-        self.k1 = Function(V)
-        self.k2 = Function(V)
-        self.k3 = Function(V)
-        self.k4 = Function(V)
-        self.Xn = Function(V)
-        self.Xnp1 = Function(V)
-        self.dt = dt
-        self.ndt = ndt
-
-    def apply(self, X):
-
-        self.Xnp1.assign(X)
-
-        for n in range(self.ndt):
-            self.Xn.assign(self.Xnp1)
-            self.solver.solve()
-            self.k1.assign(self.k)
-
-            self.X.assign(self.Xn + self.dt * self.k1 / 2.0)
-            self.solver.solve()
-            self.k2.assign(self.k)
-
-            self.X.assign(self.Xn + self.dt * self.k2 / 2.0)
-            self.solver.solve()
-            self.k3.assign(self.k)
-
-            self.X.assign(self.Xn + self.dt * self.k3)
-            self.solver.solve()
-            self.k4.assign(self.k)
-
-            self.Xnp1.assign(self.Xn + self.dt * 1 / 6.0 * (self.k1 + 2.0 * self.k2 + 2.0 * self.k3 + self.k4))
-            
-
-        return self.Xnp1
-
+        rf.load(fname="test")
+        self.u_out = None
+        self.rf = rf
+        
+    def apply(self, u):
+        print(u.dat.data[:].shape)
+        out = self.rf.map(u.dat.data[:])
+        if self.u_out:
+            self.u_out.dat.data[:] = out
+        else:
+            self.u_out = u.copy()
+            self.u_out.dat.data[:] = out
+        return self.u_out
 
 def gander_parareal():
     # settings to match Gander and Hairer paper
-    n = 50
+    n = 124
     mesh = PeriodicUnitIntervalMesh(n)
 
     # We choose degree 2 continuous Lagrange polynomials.
-    V = FunctionSpace(mesh, "CG", 2)
+    V = FunctionSpace(mesh, "CG", 1)
     u0 = Function(V, name="Velocity")
 
     # Initial condition
@@ -246,11 +202,12 @@ def gander_parareal():
     print("coarse timestep: ", dT)
     print("fine timestep: ", dt)
 
-    G = BurgersBE(V, nu, dT, 1)
+    #G = BurgersBE(V, nu, dT, 1)
+    G = Burgers_rf()
     F = BurgersBE(V, nu, dt, nF)
     solver = Parareal(G, F, V, u0, nG, K)    
     solver.parareal()
 
 if __name__ == "__main__":
-    #gander_parareal()
-    get_burgers_data()
+    gander_parareal()
+    #get_burgers_data()

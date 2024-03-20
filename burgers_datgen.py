@@ -38,8 +38,8 @@ def matern():
     m_solver1.solve()
     m_solver2.solve()
 
-T = 1.0 #  simulation time
-viscosity = Constant(1.0e-2)
+T = 0.1 #  simulation time
+viscosity = Constant(1.0/50)
 dt = 1./ncells
 timestep = Constant(dt)
 F = (inner((u1 - u0)/timestep, v)
